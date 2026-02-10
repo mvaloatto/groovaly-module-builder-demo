@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/modulebuilder.tsx","./src/components/modulepalette.tsx","./src/components/sketchgrid.tsx","./src/logic/grid.test.ts","./src/logic/grid.ts"],"version":"5.9.3"}
