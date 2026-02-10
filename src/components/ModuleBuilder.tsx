@@ -183,12 +183,17 @@ function PaletteCard({ moduleItem }: { moduleItem: ModuleVisual }): JSX.Element 
     },
   });
 
-  const style: CSSProperties = {
-    opacity: isDragging ? 0.8 : 1,
-  };
+  const style: CSSProperties | undefined = isDragging ? { opacity: 0.8 } : undefined;
 
   return (
-    <button ref={setNodeRef} type="button" className="mb-card" style={style} {...listeners} {...attributes}>
+    <button
+      ref={setNodeRef}
+      type="button"
+      className={`mb-card ${isDragging ? 'is-dragging' : ''}`}
+      style={style}
+      {...listeners}
+      {...attributes}
+    >
       <img src={moduleItem.paletteSrc} alt={moduleItem.name} className="mb-card-image" draggable={false} />
       <div className="mb-card-meta">
         <span className="mb-card-label">{moduleItem.name}</span>
