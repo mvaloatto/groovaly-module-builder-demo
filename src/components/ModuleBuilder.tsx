@@ -772,39 +772,28 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
             {actionsMounted ? (
               <div className={`mb-actions ${actionsVisible ? 'is-visible' : 'is-hidden'}`}>
                 <div className="mb-actions-left">
-                  <>
-                    <button
-                      type="button"
-                      className="mb-btn mb-btn-preview"
-                      onClick={handleRequestQuote}
-                      disabled={placedItems.length === 0}
-                    >
-                      <img src={withBase('/images/icons/icon_generate.png')} alt="" aria-hidden="true" />
-                      Request quote
-                    </button>
-                    <button
-                      type="button"
-                      className="mb-reset-link"
-                      onClick={() => {
-                        setPlacedItems([]);
-                        setAddFeet(false);
-                        setQuotePayload(null);
-                        setIsQuoteOpen(false);
-                      }}
-                    >
-                      <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
-                      Reset grid
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    className="mb-btn mb-btn-preorder"
+                    onClick={handleRequestQuote}
+                    disabled={placedItems.length === 0}
+                  >
+                    Request a quote
+                  </button>
+                  <button
+                    type="button"
+                    className="mb-reset-link"
+                    onClick={() => {
+                      setPlacedItems([]);
+                      setAddFeet(false);
+                      setQuotePayload(null);
+                      setIsQuoteOpen(false);
+                    }}
+                  >
+                    <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
+                    Reset grid
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="mb-btn mb-btn-preorder"
-                  onClick={handleRequestQuote}
-                  disabled={placedItems.length === 0}
-                >
-                  Request a quote
-                </button>
               </div>
             ) : null}
           </div>
