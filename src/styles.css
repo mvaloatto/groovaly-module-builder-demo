@@ -40,10 +40,6 @@ body {
   background: #fff;
 }
 
-.gb-app-embed {
-  min-height: auto;
-}
-
 .gb-app a {
   color: inherit;
   text-decoration: none;
@@ -162,10 +158,8 @@ body {
   padding: 24px 0 3rem;
 }
 
-.gb-content-shell-embed {
-  width: 100%;
-  margin: 0;
-  padding: 0;
+.gb-content-shell-builder-only {
+  padding-top: 0;
 }
 
 .gb-builder {

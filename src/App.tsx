@@ -33,8 +33,8 @@ export default function App(): JSX.Element {
   const vars = mapTokens(designTokens);
 
   return (
-    <main className="gb-app gb-app-embed" style={vars as CSSProperties}>
-      <section className="gb-content-shell gb-content-shell-embed">
+    <main className="gb-app" style={vars as CSSProperties}>
+      <section className="gb-content-shell gb-content-shell-builder-only">
         <ModuleBuilder showHeader={false} showDebug={false} />
       </section>
     </main>
