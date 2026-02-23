@@ -389,9 +389,14 @@ function isRectOutsideSceneCenter(rect: GhostRect, scene: HTMLDivElement | null)
 type ModuleBuilderProps = {
   showHeader?: boolean;
   showDebug?: boolean;
+  embedMode?: boolean;
 };
 
-export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = false }: ModuleBuilderProps): JSX.Element {
+export function ModuleBuilder({
+  showHeader: _showHeader = true,
+  showDebug = false,
+  embedMode = false,
+}: ModuleBuilderProps): JSX.Element {
   const [placedItems, setPlacedItems] = useState<PlacedItem[]>([]);
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
   const [candidate, setCandidate] = useState<CandidatePlacement | null>(null);
@@ -797,12 +802,22 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
 
     try {
       const payload = buildQuotePayload();
+      if (embedMode && typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          {
+            type: 'GROOVALY_QUOTE_STARTED',
+            payload: {
+              generatedAt: payload.generatedAt,
+              summary: payload.summary,
+            },
+          },
+          '*',
+        );
+      }
+
       const screenshot = await buildSceneScreenshotBlob();
 
       if (screenshot) {
-        for (const item of placedItems) {
-          if (item.row !== 0) continue;
-        }
         try {
           const uploaded = await uploadQuotePreviewToCloudinary(screenshot);
           if (uploaded) {
@@ -817,7 +832,20 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
       }
 
       setQuotePayload(payload);
-      setIsQuoteOpen(true);
+      if (!embedMode) {
+        setIsQuoteOpen(true);
+      }
+
+      if (embedMode && typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          {
+            type: 'GROOVALY_QUOTE_READY',
+            payload,
+          },
+          '*',
+        );
+      }
+
       if (debugExports) {
         console.log('[Groovaly builder-only] Quote payload', payload);
       }
@@ -1008,7 +1036,7 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
           </span>
         </div>
       ) : null}
-      {isQuoteOpen && quotePayload ? (
+      {!embedMode && isQuoteOpen && quotePayload ? (
         <div className="mb-quote-modal-backdrop" role="dialog" aria-modal="true" aria-label="Quote payload">
           <div className="mb-quote-modal">
             <div className="mb-quote-head">
