@@ -1,10 +1,10 @@
-# Groovaly Module Setup Builder Prototype
+# Groovaly Module Setup Builder (MVP no-AI)
 
-A Vite + React + TypeScript prototype for configuring modular furniture blocks in a 4x3 grid with structural support constraints.
+A Vite + React + TypeScript builder for configuring modular furniture blocks in a 6x4 grid with structural support constraints.
 
 ## What it includes
 
-- Drag modules from palette into a 4x3 grid
+- Drag modules from palette into a 6x4 grid
 - Drag placed modules to reposition
 - Snap-to-cell placement
 - Constraint enforcement:
@@ -14,15 +14,13 @@ A Vite + React + TypeScript prototype for configuring modular furniture blocks i
 - Live placement preview (green valid / red invalid)
 - Delete button (`x`) on placed modules
 - Reset button
-- RoughJS sketch-style rendering for grid and module cards
 - Touch + mouse drag support via dnd-kit sensors
-- Groovaly token extraction script with fallback tokens
+- Request quote payload (local modal/debug, no backend call)
 
 ## Tech
 
 - React 18 + TypeScript + Vite
 - `@dnd-kit/core`
-- `roughjs`
 - Playwright (`@playwright/test`) for token extraction script
 - Vitest for grid logic tests
 
@@ -32,6 +30,8 @@ A Vite + React + TypeScript prototype for configuring modular furniture blocks i
 npm install
 npm run dev
 ```
+
+This MVP branch runs fully static. No backend process is required.
 
 Build + preview:
 
@@ -61,7 +61,7 @@ This runs `scripts/extract-groovaly-tokens.ts`, which:
 
 If extraction fails, fallback values are written to `src/design-tokens.json`.
 
-## Embedding `ModuleBuilder` later
+## Embedding `ModuleBuilder` in an existing site
 
 The core builder is exported as:
 
@@ -91,6 +91,20 @@ ReactDOM.createRoot(document.getElementById('module-builder-root')!).render(
 ```
 
 3. Keep styles scoped via the `gb-` prefixed classes and CSS variables.
+
+## GitHub Pages (this branch)
+
+The workflow in `.github/workflows/deploy-pages.yml` deploys this static app when pushing to:
+
+- `codex/mvp-no-ai`
+- `mvp-no-ai`
+
+Local production check:
+
+```bash
+npm run build
+npm run preview
+```
 
 ## File map
 

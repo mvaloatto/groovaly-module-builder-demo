@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import designTokens from './design-tokens.json';
 import { ModuleBuilder } from './components/ModuleBuilder';
 
@@ -64,6 +64,7 @@ function SocialIcon({ kind }: { kind: 'instagram' | 'youtube' | 'tiktok' | 'pint
 
 export default function App(): JSX.Element {
   const vars = mapTokens(designTokens);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const socialLinks = [
     { href: 'https://www.instagram.com/', label: 'Instagram', kind: 'instagram' as const },
@@ -108,7 +109,7 @@ export default function App(): JSX.Element {
       </header>
 
       <section className="gb-content-shell">
-        <ModuleBuilder showHeader={false} />
+        <ModuleBuilder showHeader={false} showDebug={adminOpen} />
       </section>
 
       <footer className="gb-site-footer">
@@ -153,6 +154,15 @@ export default function App(): JSX.Element {
             </span>
             <a href="#">FR</a>
           </div>
+          <button
+            type="button"
+            className="gb-footer-admin-toggle"
+            onClick={() => setAdminOpen((current) => !current)}
+            aria-expanded={adminOpen}
+            aria-controls="module-builder-debug"
+          >
+            Admin
+          </button>
         </div>
       </footer>
     </main>
