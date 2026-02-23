@@ -1090,6 +1090,14 @@ body {
   word-break: break-word;
 }
 
+.mb-quote-error {
+  margin: 0 14px 14px;
+  color: #b02a2a;
+  font-family: 'Alegreya Sans Local', var(--gb-body-font);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
 .gb-site-footer {
   background: #000;
   color: rgb(250, 250, 250);

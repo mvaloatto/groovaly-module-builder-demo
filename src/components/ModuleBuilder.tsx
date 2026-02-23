@@ -42,6 +42,9 @@ type QuotePayload = {
     subtotal: number;
   }>;
   layout: ReturnType<typeof exportLayout>;
+  previewImageUrl?: string;
+  previewImageWidth?: number;
+  previewImageHeight?: number;
 };
 
 type ActiveDrag = {
@@ -139,6 +142,9 @@ const MODULE_PRICES: Record<ModuleId, number> = {
   nest: 115,
 };
 
+const CLOUDINARY_CLOUD_NAME = 'dnzdunl2d';
+const CLOUDINARY_UNSIGNED_PRESET = 'groovaly_quotes_unsigned';
+
 function moduleById(id: ModuleId): ModuleVisual {
   return MODULES.find((moduleItem) => moduleItem.id === id) ?? MODULES[0];
 }
@@ -200,6 +206,15 @@ function gridModuleSrc(moduleId: ModuleId, hires: boolean): string {
 
 function feetSrc(width: 1 | 2, hires: boolean): string {
   return withBase(`/images/grid/feets_${width === 2 ? 'duo' : 'mono'}_grid${hires ? '-hires' : ''}.png`);
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Image failed to load: ${src}`));
+    image.src = src;
+  });
 }
 
 function PaletteCard({ moduleItem, hires }: { moduleItem: ModuleVisual; hires: boolean }): JSX.Element {
@@ -385,6 +400,8 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
   const [addFeet, setAddFeet] = useState(false);
   const [quotePayload, setQuotePayload] = useState<QuotePayload | null>(null);
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+  const [isQuoteSubmitting, setIsQuoteSubmitting] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
   const [debugExports, setDebugExports] = useState(false);
   const [actionsMounted, setActionsMounted] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
@@ -684,12 +701,104 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
     };
   };
 
-  const handleRequestQuote = (): void => {
-    const payload = buildQuotePayload();
-    setQuotePayload(payload);
-    setIsQuoteOpen(true);
-    if (debugExports) {
-      console.log('[Groovaly builder-only] Quote payload', payload);
+  const buildSceneScreenshotBlob = async (): Promise<{ blob: Blob; width: number; height: number } | null> => {
+    if (sceneWidth <= 0) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = background.width;
+    canvas.height = background.height;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+
+    const backgroundImage = await loadImage(background.image);
+    context.drawImage(backgroundImage, 0, 0, background.width, background.height);
+
+    if (addFeet) {
+      for (const item of placedItems) {
+        if (item.row !== 0) continue;
+        const feetImage = await loadImage(feetSrc(item.w, true));
+        const left = background.gridX + item.col * background.colWidth;
+        const top = background.gridY + GRID_ROWS * background.rowHeight;
+        const width = item.w * background.colWidth;
+        const height = background.feetHeight;
+        context.drawImage(feetImage, left, top, width, height);
+      }
+    }
+
+    for (const item of placedItems) {
+      const moduleImage = await loadImage(gridModuleSrc(item.typeId as ModuleId, true));
+      const left = background.gridX + item.col * background.colWidth;
+      const top = rowTop(item.row, background);
+      const width = item.w * background.colWidth;
+      const height = background.rowHeight;
+      context.drawImage(moduleImage, left, top, width, height);
+    }
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/jpeg', 0.86);
+    });
+    if (!blob) return null;
+    return { blob, width: canvas.width, height: canvas.height };
+  };
+
+  const uploadQuotePreviewToCloudinary = async (
+    screenshot: { blob: Blob; width: number; height: number },
+  ): Promise<{ secureUrl: string; width: number; height: number } | null> => {
+    const formData = new FormData();
+    formData.append('file', screenshot.blob, `groovaly-quote-${Date.now()}.jpg`);
+    formData.append('upload_preset', CLOUDINARY_UNSIGNED_PRESET);
+    formData.append('folder', 'groovaly/quotes');
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Cloudinary upload failed (${response.status})`);
+    }
+
+    const json = (await response.json()) as { secure_url?: string };
+    if (!json.secure_url) return null;
+
+    return {
+      secureUrl: json.secure_url,
+      width: screenshot.width,
+      height: screenshot.height,
+    };
+  };
+
+  const handleRequestQuote = async (): Promise<void> => {
+    if (placedItems.length === 0 || isQuoteSubmitting) return;
+
+    setQuoteError(null);
+    setIsQuoteSubmitting(true);
+
+    try {
+      const payload = buildQuotePayload();
+      const screenshot = await buildSceneScreenshotBlob();
+
+      if (screenshot) {
+        try {
+          const uploaded = await uploadQuotePreviewToCloudinary(screenshot);
+          if (uploaded) {
+            payload.previewImageUrl = uploaded.secureUrl;
+            payload.previewImageWidth = uploaded.width;
+            payload.previewImageHeight = uploaded.height;
+          }
+        } catch (error) {
+          console.warn('[Groovaly builder-only] Cloudinary upload failed, payload will be sent without image.', error);
+          setQuoteError("Preview upload failed. Quote payload is still available without image.");
+        }
+      }
+
+      setQuotePayload(payload);
+      setIsQuoteOpen(true);
+      if (debugExports) {
+        console.log('[Groovaly builder-only] Quote payload', payload);
+      }
+    } finally {
+      setIsQuoteSubmitting(false);
     }
   };
 
@@ -776,9 +885,9 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
                     type="button"
                     className="mb-btn mb-btn-preorder"
                     onClick={handleRequestQuote}
-                    disabled={placedItems.length === 0}
+                    disabled={placedItems.length === 0 || isQuoteSubmitting}
                   >
-                    Request a quote
+                    {isQuoteSubmitting ? 'Uploading preview...' : 'Request a quote'}
                   </button>
                   <button
                     type="button"
@@ -811,11 +920,12 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
                 type="button"
                 className="mb-preview-debug-action"
                 onClick={handleRequestQuote}
-                disabled={placedItems.length === 0}
+                disabled={placedItems.length === 0 || isQuoteSubmitting}
               >
-                Generate quote payload (debug)
+                {isQuoteSubmitting ? 'Uploading preview...' : 'Generate quote payload (debug)'}
               </button>
               {placedItems.length === 0 ? <p className="mb-preview-hint">Add at least one module to request a quote.</p> : null}
+              {quoteError ? <p className="mb-preview-hint">{quoteError}</p> : null}
               {quotePayload ? <pre className="mb-preview-response">{JSON.stringify(quotePayload, null, 2)}</pre> : null}
             </div>
           ) : null}
@@ -884,6 +994,7 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
               </button>
             </div>
             <pre className="mb-quote-json">{JSON.stringify(quotePayload, null, 2)}</pre>
+            {quoteError ? <p className="mb-quote-error">{quoteError}</p> : null}
           </div>
         </div>
       ) : null}
