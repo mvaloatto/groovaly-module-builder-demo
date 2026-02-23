@@ -84,19 +84,33 @@ body {
 }
 
 .gb-app-embed .mb-catalog-row-2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
+  width: 100%;
 }
 
 .gb-app-embed .mb-catalog-row-2 .mb-card {
-  width: calc((100% - 10px) / 3);
+  width: 100%;
 }
 
 .gb-app-embed .mb-catalog-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
+  width: 100%;
 }
 
 .gb-app-embed .mb-catalog-row-3 .mb-card {
-  width: calc((100% - 5px) / 2);
+  width: 100%;
+}
+
+.gb-app-embed .mb-catalog-row-3 .mb-card:first-child {
+  grid-column: 1;
+}
+
+.gb-app-embed .mb-catalog-row-3 .mb-card:last-child {
+  grid-column: 3;
 }
 
 .gb-app-embed .mb-catalog-row-1 .mb-card:first-child .mb-card-image,
