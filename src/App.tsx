@@ -16,6 +16,8 @@ const fallback = {
   bodyFont: 'system-ui, sans-serif',
 };
 
+const withBase = (path: string): string => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+
 function mapTokens(raw: TokenShape): Record<string, string> {
   const tokens = raw.tokens ?? {};
   return {
@@ -85,7 +87,7 @@ export default function App(): JSX.Element {
             ))}
           </div>
           <a href="#" className="gb-logo" aria-label="Groovaly home">
-            <img src="/brand/Logo_Groovaly.webp" alt="Groovaly" />
+            <img src={withBase('/brand/Logo_Groovaly.webp')} alt="Groovaly" />
           </a>
           <div className="gb-account-links">
             <a href="#">Login</a>

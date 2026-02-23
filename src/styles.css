@@ -10,7 +10,7 @@
 
 @font-face {
   font-family: 'Alegreya Sans Local';
-  src: url('/fonts/Alegreya_Sans/AlegreyaSans-Regular.ttf') format('truetype');
+  src: url('../fonts/Alegreya_Sans/AlegreyaSans-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -18,7 +18,7 @@
 
 @font-face {
   font-family: 'Libre Baskerville Local';
-  src: url('/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf') format('truetype');
+  src: url('../fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf') format('truetype');
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;

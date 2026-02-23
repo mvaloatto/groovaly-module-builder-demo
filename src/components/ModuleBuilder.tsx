@@ -70,10 +70,12 @@ type BackgroundGeometry = {
   feetHeight: number;
 };
 
+const withBase = (path: string): string => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+
 const BACKGROUNDS: BackgroundGeometry[] = [
   {
     key: 'low',
-    image: '/images/backgrounds/bckg_low.png',
+    image: withBase('/images/backgrounds/bckg_low.png'),
     width: 934,
     height: 602,
     gridX: 150,
@@ -84,7 +86,7 @@ const BACKGROUNDS: BackgroundGeometry[] = [
   },
   {
     key: 'med',
-    image: '/images/backgrounds/bckg_med.png',
+    image: withBase('/images/backgrounds/bckg_med.png'),
     width: 1401,
     height: 903,
     gridX: 226,
@@ -95,7 +97,7 @@ const BACKGROUNDS: BackgroundGeometry[] = [
   },
   {
     key: 'high',
-    image: '/images/backgrounds/bckg_high.png',
+    image: withBase('/images/backgrounds/bckg_high.png'),
     width: 1868,
     height: 1204,
     gridX: 301,
@@ -106,7 +108,7 @@ const BACKGROUNDS: BackgroundGeometry[] = [
   },
   {
     key: 'max',
-    image: '/images/backgrounds/bckg_max.png',
+    image: withBase('/images/backgrounds/bckg_max.png'),
     width: 2802,
     height: 1806,
     gridX: 451,
@@ -189,15 +191,15 @@ function resolveBackground(sceneWidthCss: number, dpr: number): BackgroundGeomet
 }
 
 function selectionSrc(moduleId: ModuleId, hires: boolean): string {
-  return `/images/selection/${moduleId}_select${hires ? '-hires' : ''}.png`;
+  return withBase(`/images/selection/${moduleId}_select${hires ? '-hires' : ''}.png`);
 }
 
 function gridModuleSrc(moduleId: ModuleId, hires: boolean): string {
-  return `/images/grid/${moduleId}_grid${hires ? '-hires' : ''}.png`;
+  return withBase(`/images/grid/${moduleId}_grid${hires ? '-hires' : ''}.png`);
 }
 
 function feetSrc(width: 1 | 2, hires: boolean): string {
-  return `/images/grid/feets_${width === 2 ? 'duo' : 'mono'}_grid${hires ? '-hires' : ''}.png`;
+  return withBase(`/images/grid/feets_${width === 2 ? 'duo' : 'mono'}_grid${hires ? '-hires' : ''}.png`);
 }
 
 function PaletteCard({ moduleItem, hires }: { moduleItem: ModuleVisual; hires: boolean }): JSX.Element {
@@ -327,7 +329,7 @@ function PlacedModule({
         }}
         aria-label={`Remove ${moduleItem.name}`}
       >
-        <img src="/images/icons/icon_remove.png" alt="" aria-hidden="true" />
+        <img src={withBase('/images/icons/icon_remove.png')} alt="" aria-hidden="true" />
       </button>
     </div>
   );
@@ -777,7 +779,7 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
                       onClick={handleRequestQuote}
                       disabled={placedItems.length === 0}
                     >
-                      <img src="/images/icons/icon_generate.png" alt="" aria-hidden="true" />
+                      <img src={withBase('/images/icons/icon_generate.png')} alt="" aria-hidden="true" />
                       Request quote
                     </button>
                     <button
@@ -790,7 +792,7 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
                         setIsQuoteOpen(false);
                       }}
                     >
-                      <img src="/images/icons/icon_reset.png" alt="" aria-hidden="true" />
+                      <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
                       Reset grid
                     </button>
                   </>
@@ -833,7 +835,7 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
         <aside className="mb-side" aria-label="Modules panel">
           <h2 className="mb-side-title">Modules</h2>
           <div className="mb-side-subtitle">
-            <img src="/images/icons/icon_drag.png" alt="" aria-hidden="true" />
+            <img src={withBase('/images/icons/icon_drag.png')} alt="" aria-hidden="true" />
             <span>Drag any module onto the grid</span>
           </div>
           <div className="mb-catalog mb-catalog-row-1">
@@ -859,7 +861,7 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
               <DragModulePreview moduleId={activeDrag.typeId} width={previewSize.width} height={previewSize.height} hires={hires} />
               {isGhostOutsideScene && activeDrag.source === 'grid' ? (
                 <span className="mb-overlay-remove-icon" aria-hidden="true">
-                  <img src="/images/icons/icon_remove.png" alt="" />
+                  <img src={withBase('/images/icons/icon_remove.png')} alt="" />
                 </span>
               ) : null}
             </div>
@@ -879,7 +881,7 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
         >
           <img src={gridModuleSrc(dismissGhost.moduleId, dismissGhost.hires)} alt="" className="mb-dismiss-ghost-image" />
           <span className="mb-overlay-remove-icon">
-            <img src="/images/icons/icon_remove.png" alt="" />
+            <img src={withBase('/images/icons/icon_remove.png')} alt="" />
           </span>
         </div>
       ) : null}
