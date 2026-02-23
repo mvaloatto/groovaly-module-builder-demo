@@ -144,6 +144,8 @@ const MODULE_PRICES: Record<ModuleId, number> = {
 
 const CLOUDINARY_CLOUD_NAME = 'dnzdunl2d';
 const CLOUDINARY_UNSIGNED_PRESET = 'groovaly_quotes_unsigned';
+const SCREENSHOT_MAX_WIDTH = 900;
+const SCREENSHOT_JPEG_QUALITY = 0.68;
 
 function moduleById(id: ModuleId): ModuleVisual {
   return MODULES.find((moduleItem) => moduleItem.id === id) ?? MODULES[0];
@@ -704,38 +706,57 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
   const buildSceneScreenshotBlob = async (): Promise<{ blob: Blob; width: number; height: number } | null> => {
     if (sceneWidth <= 0) return null;
 
+    const scaleRatio = Math.min(1, SCREENSHOT_MAX_WIDTH / background.width);
+    const targetWidth = Math.max(1, Math.round(background.width * scaleRatio));
+    const targetHeight = Math.max(1, Math.round(background.height * scaleRatio));
+
     const canvas = document.createElement('canvas');
-    canvas.width = background.width;
-    canvas.height = background.height;
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
     const context = canvas.getContext('2d');
     if (!context) return null;
 
+    const imageCache = new Map<string, Promise<HTMLImageElement>>();
+    const loadCachedImage = (src: string): Promise<HTMLImageElement> => {
+      const cached = imageCache.get(src);
+      if (cached) return cached;
+      const promise = loadImage(src);
+      imageCache.set(src, promise);
+      return promise;
+    };
+
+    const toX = (value: number) => value * scaleRatio;
+    const toY = (value: number) => value * scaleRatio;
+
     const backgroundImage = await loadImage(background.image);
-    context.drawImage(backgroundImage, 0, 0, background.width, background.height);
+    context.drawImage(backgroundImage, 0, 0, targetWidth, targetHeight);
 
     if (addFeet) {
-      for (const item of placedItems) {
-        if (item.row !== 0) continue;
-        const feetImage = await loadImage(feetSrc(item.w, true));
-        const left = background.gridX + item.col * background.colWidth;
-        const top = background.gridY + GRID_ROWS * background.rowHeight;
-        const width = item.w * background.colWidth;
-        const height = background.feetHeight;
-        context.drawImage(feetImage, left, top, width, height);
-      }
+      const feetTasks = placedItems
+        .filter((item) => item.row === 0)
+        .map(async (item) => {
+          const feetImage = await loadCachedImage(feetSrc(item.w, false));
+          const left = toX(background.gridX + item.col * background.colWidth);
+          const top = toY(background.gridY + GRID_ROWS * background.rowHeight);
+          const width = toX(item.w * background.colWidth);
+          const height = toY(background.feetHeight);
+          context.drawImage(feetImage, left, top, width, height);
+        });
+      await Promise.all(feetTasks);
     }
 
-    for (const item of placedItems) {
-      const moduleImage = await loadImage(gridModuleSrc(item.typeId as ModuleId, true));
-      const left = background.gridX + item.col * background.colWidth;
-      const top = rowTop(item.row, background);
-      const width = item.w * background.colWidth;
-      const height = background.rowHeight;
+    const moduleTasks = placedItems.map(async (item) => {
+      const moduleImage = await loadCachedImage(gridModuleSrc(item.typeId as ModuleId, false));
+      const left = toX(background.gridX + item.col * background.colWidth);
+      const top = toY(rowTop(item.row, background));
+      const width = toX(item.w * background.colWidth);
+      const height = toY(background.rowHeight);
       context.drawImage(moduleImage, left, top, width, height);
-    }
+    });
+    await Promise.all(moduleTasks);
 
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/jpeg', 0.86);
+      canvas.toBlob(resolve, 'image/jpeg', SCREENSHOT_JPEG_QUALITY);
     });
     if (!blob) return null;
     return { blob, width: canvas.width, height: canvas.height };
@@ -779,6 +800,9 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
       const screenshot = await buildSceneScreenshotBlob();
 
       if (screenshot) {
+        for (const item of placedItems) {
+          if (item.row !== 0) continue;
+        }
         try {
           const uploaded = await uploadQuotePreviewToCloudinary(screenshot);
           if (uploaded) {
@@ -788,7 +812,7 @@ export function ModuleBuilder({ showHeader: _showHeader = true, showDebug = fals
           }
         } catch (error) {
           console.warn('[Groovaly builder-only] Cloudinary upload failed, payload will be sent without image.', error);
-          setQuoteError("Preview upload failed. Quote payload is still available without image.");
+          setQuoteError('Preview upload failed. Quote payload is still available without image.');
         }
       }
 
