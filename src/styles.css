@@ -110,7 +110,7 @@ body {
 }
 
 .gb-app-embed .mb-catalog-row-3 .mb-card:last-child {
-  grid-column: 3;
+  grid-column: 2;
 }
 
 .gb-app-embed .mb-catalog-row-1 .mb-card:first-child .mb-card-image,
