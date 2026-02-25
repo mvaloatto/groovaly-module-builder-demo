@@ -368,6 +368,7 @@ function PlacedModule({
   scale,
   hires,
   addFeet,
+  compactLabel,
   onToggleFeet,
   onRemove,
 }: {
@@ -376,6 +377,7 @@ function PlacedModule({
   scale: number;
   hires: boolean;
   addFeet: boolean;
+  compactLabel?: boolean;
   onToggleFeet: () => void;
   onRemove: (id: string) => void;
 }): JSX.Element {
@@ -427,7 +429,7 @@ function PlacedModule({
           <span className="mb-feet-check" aria-hidden="true">
             <span className={addFeet ? 'is-on' : ''} />
           </span>
-          <span className="mb-feet-label">add feet</span>
+          <span className="mb-feet-label">{compactLabel ? 'feet' : 'add feet'}</span>
         </button>
       ) : null}
 
@@ -1073,6 +1075,7 @@ export function ModuleBuilder({
                 scale={scale}
                 hires={hires}
                 addFeet={addFeet}
+                compactLabel={isCompactLayout}
                 onToggleFeet={() => setAddFeet((current) => !current)}
                 onRemove={(id) => setPlacedItems((current) => current.filter((entry) => entry.id !== id))}
               />

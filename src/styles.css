@@ -1782,11 +1782,12 @@ body {
 
   .mb-feet-toggle {
     left: 8px;
-    top: 8px;
-    width: 65px;
+    top: auto;
+    bottom: 8px;
+    width: 48px;
     height: 20px;
-    padding: 0 5px;
-    gap: 5px;
+    padding: 0 4px;
+    gap: 4px;
     opacity: 1;
   }
 
@@ -1831,4 +1832,18 @@ body {
   .mb-feet-toggle {
     opacity: 1;
   }
+}
+
+.mb-builder.is-mobile-layout .mb-feet-toggle {
+  left: 8px;
+  top: auto;
+  bottom: 8px;
+  width: 48px;
+  height: 20px;
+  padding: 0 4px;
+  gap: 4px;
+}
+
+.mb-builder.is-mobile-layout .mb-feet-label {
+  font-size: 11px;
 }
