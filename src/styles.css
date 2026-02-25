@@ -24,6 +24,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Almarai Local';
+  src: url('../fonts/Almarai/Almarai-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -750,9 +758,23 @@ body {
 
 .mb-btn-preorder {
   background: #000;
-  color: #fff;
-  border-color: #000;
-  min-width: 215px;
+  color: rgb(250, 250, 250);
+  border: 0;
+  border-radius: 10px;
+  width: auto;
+  min-width: 185px;
+  height: auto;
+  padding-block: 16px;
+  padding-inline: 20.8px;
+  font-family: 'Almarai Local', var(--gb-body-font);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: center;
+  transition: opacity 0.1s linear;
+  -webkit-font-smoothing: antialiased;
 }
 
 .mb-btn-back-icon {
@@ -1365,7 +1387,11 @@ body {
   }
 
   .mb-btn-preorder {
-    min-width: 250px;
+    width: auto;
+    min-width: 220px;
+    padding-block: 16px;
+    padding-inline: 20.8px;
+    font-size: 16px;
   }
 
   .mb-btn img {
@@ -1479,6 +1505,10 @@ body {
   .mb-btn,
   .mb-reset-link {
     font-size: 18px;
+  }
+
+  .mb-btn-preorder {
+    font-size: 16px;
   }
 
   .mb-btn-back-icon {
