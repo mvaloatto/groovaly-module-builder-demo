@@ -465,6 +465,7 @@ export function ModuleBuilder({
   const [debugExports, setDebugExports] = useState(false);
   const [actionsMounted, setActionsMounted] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [activeDragRect, setActiveDragRect] = useState<{ width: number; height: number } | null>(null);
 
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const lastGhostRectRef = useRef<GhostRect | null>(null);
@@ -557,6 +558,13 @@ export function ModuleBuilder({
       w: data.w as 1 | 2,
       placedId: data.placedId as string | undefined,
     });
+
+    const initial = event.active.rect.current.initial;
+    if (initial?.width && initial?.height) {
+      setActiveDragRect({ width: initial.width, height: initial.height });
+    } else {
+      setActiveDragRect(null);
+    }
   };
 
   const handleDragMove = (event: DragMoveEvent): void => {
@@ -620,6 +628,7 @@ export function ModuleBuilder({
     if (!activeDrag) {
       setIsGhostOutsideScene(false);
       setActiveDrag(null);
+      setActiveDragRect(null);
       setCandidate(null);
       return;
     }
@@ -649,6 +658,7 @@ export function ModuleBuilder({
 
       setIsGhostOutsideScene(false);
       setActiveDrag(null);
+      setActiveDragRect(null);
       setCandidate(null);
       return;
     }
@@ -656,6 +666,7 @@ export function ModuleBuilder({
     if (!candidate || !candidate.valid) {
       setIsGhostOutsideScene(false);
       setActiveDrag(null);
+      setActiveDragRect(null);
       setCandidate(null);
       return;
     }
@@ -695,12 +706,14 @@ export function ModuleBuilder({
 
     setIsGhostOutsideScene(false);
     setActiveDrag(null);
+    setActiveDragRect(null);
     setCandidate(null);
   };
 
   const handleDragCancel = (): void => {
     setIsGhostOutsideScene(false);
     setActiveDrag(null);
+    setActiveDragRect(null);
     setCandidate(null);
   };
 
@@ -715,10 +728,16 @@ export function ModuleBuilder({
 
   const previewSize = useMemo(() => {
     if (!activeDrag) return { width: 120, height: 120 };
+    if (activeDragRect?.width && activeDragRect?.height) {
+      return {
+        width: Math.max(95, activeDragRect.width),
+        height: Math.max(75, activeDragRect.height),
+      };
+    }
     const width = Math.max(110, background.colWidth * activeDrag.w * Math.max(scale, 0.35));
     const height = Math.max(105, background.rowHeight * Math.max(scale, 0.35));
     return { width, height };
-  }, [activeDrag, background, scale]);
+  }, [activeDrag, activeDragRect, background, scale]);
 
   const feetModules = useMemo(() => {
     if (!addFeet) return [];
@@ -914,6 +933,13 @@ export function ModuleBuilder({
     (moduleItem) => moduleItem.id === 'bloom' || moduleItem.id === 'grid' || moduleItem.id === 'split',
   );
   const bottomRow = MODULES.filter((moduleItem) => moduleItem.id === 'cub' || moduleItem.id === 'nest');
+  const hasPlacedItems = placedItems.length > 0;
+  const resetBuilder = (): void => {
+    setPlacedItems([]);
+    setAddFeet(false);
+    setQuotePayload(null);
+    setIsQuoteOpen(false);
+  };
 
   return (
     <section className="mb-builder" aria-label="Module setup builder">
@@ -985,6 +1011,13 @@ export function ModuleBuilder({
               />
             ))}
 
+            {hasPlacedItems ? (
+              <button type="button" className="mb-reset-link mb-reset-link-overlay" onClick={resetBuilder}>
+                <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
+                Reset grid
+              </button>
+            ) : null}
+
             {actionsMounted ? (
               <div className={`mb-actions ${actionsVisible ? 'is-visible' : 'is-hidden'}`}>
                 <div className="mb-actions-left">
@@ -999,12 +1032,7 @@ export function ModuleBuilder({
                   <button
                     type="button"
                     className="mb-reset-link"
-                    onClick={() => {
-                      setPlacedItems([]);
-                      setAddFeet(false);
-                      setQuotePayload(null);
-                      setIsQuoteOpen(false);
-                    }}
+                    onClick={resetBuilder}
                   >
                     <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
                     Reset grid
@@ -1038,11 +1066,25 @@ export function ModuleBuilder({
           ) : null}
         </div>
 
-        <aside className="mb-side" aria-label="Modules panel">
-          <h2 className="mb-side-title">Modules</h2>
-          <div className="mb-side-subtitle">
-            <img src={withBase('/images/icons/icon_drag.png')} alt="" aria-hidden="true" />
-            <span>Drag any module onto the grid</span>
+        <aside className={`mb-side ${hasPlacedItems ? 'has-modules' : ''}`} aria-label="Modules panel">
+          <div className="mb-side-head">
+            <h2 className="mb-side-title">Modules</h2>
+            <div className="mb-side-head-right">
+              <div className="mb-side-subtitle">
+                <img src={withBase('/images/icons/icon_drag.png')} alt="" aria-hidden="true" />
+                <span>Drag any module onto the grid</span>
+              </div>
+              {hasPlacedItems ? (
+                <button
+                  type="button"
+                  className="mb-btn mb-btn-preorder mb-btn-preorder-mobile"
+                  onClick={handleRequestQuote}
+                  disabled={isQuoteSubmitting}
+                >
+                  {isQuoteSubmitting ? 'Uploading preview...' : 'Request a quote'}
+                </button>
+              ) : null}
+            </div>
           </div>
           <div className="mb-catalog mb-catalog-row-1">
             {topRow.map((moduleItem) => (
