@@ -261,7 +261,7 @@ function buildReadableQuotePayload(layout: ReturnType<typeof exportLayout>): str
     .map((line) => `${line.quantity}x ${line.type} - Quantity:${line.quantity} ; Color: White Pearl ; Feet: ${line.feet}`);
 
   return [
-    '',
+    '-',
     '---',
     `Composition details (${modules.length} modules):`,
     ...detailLines,
