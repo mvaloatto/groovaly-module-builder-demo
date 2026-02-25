@@ -509,6 +509,7 @@ export function ModuleBuilder({
   const [actionsVisible, setActionsVisible] = useState(false);
   const [activeDragRect, setActiveDragRect] = useState<{ width: number; height: number } | null>(null);
   const [isCompactLayout, setIsCompactLayout] = useState(false);
+  const [hasDragMoved, setHasDragMoved] = useState(false);
   const [holdPreview, setHoldPreview] = useState<{
     moduleId: ModuleId;
     left: number;
@@ -603,6 +604,7 @@ export function ModuleBuilder({
 
   const handleDragStart = (event: DragStartEvent): void => {
     setHoldPreview(null);
+    setHasDragMoved(false);
     const data = event.active.data.current;
     if (!data) return;
     setIsGhostOutsideScene(false);
@@ -625,6 +627,7 @@ export function ModuleBuilder({
 
   const handleDragMove = (event: DragMoveEvent): void => {
     setHoldPreview(null);
+    if (!hasDragMoved) setHasDragMoved(true);
     const translatedRect = toGhostRect(event.active.rect.current.translated);
     if (translatedRect) {
       lastGhostRectRef.current = translatedRect;
@@ -686,6 +689,7 @@ export function ModuleBuilder({
     if (!activeDrag) {
       setIsGhostOutsideScene(false);
       setActiveDrag(null);
+      setHasDragMoved(false);
       setActiveDragRect(null);
       setCandidate(null);
       return;
@@ -716,6 +720,7 @@ export function ModuleBuilder({
 
       setIsGhostOutsideScene(false);
       setActiveDrag(null);
+      setHasDragMoved(false);
       setActiveDragRect(null);
       setCandidate(null);
       return;
@@ -724,6 +729,7 @@ export function ModuleBuilder({
     if (!candidate || !candidate.valid) {
       setIsGhostOutsideScene(false);
       setActiveDrag(null);
+      setHasDragMoved(false);
       setActiveDragRect(null);
       setCandidate(null);
       return;
@@ -764,6 +770,7 @@ export function ModuleBuilder({
 
     setIsGhostOutsideScene(false);
     setActiveDrag(null);
+    setHasDragMoved(false);
     setActiveDragRect(null);
     setCandidate(null);
   };
@@ -772,6 +779,7 @@ export function ModuleBuilder({
     setHoldPreview(null);
     setIsGhostOutsideScene(false);
     setActiveDrag(null);
+    setHasDragMoved(false);
     setActiveDragRect(null);
     setCandidate(null);
   };
@@ -1182,7 +1190,11 @@ export function ModuleBuilder({
 
         <DragOverlay dropAnimation={null}>
           {activeDrag ? (
-            <div className={`mb-overlay-shell ${isGhostOutsideScene ? 'is-remove-target' : ''}`}>
+            <div
+              className={`mb-overlay-shell ${isGhostOutsideScene ? 'is-remove-target' : ''} ${
+                isCompactLayout && !hasDragMoved ? 'is-touch-hold' : ''
+              }`}
+            >
               <DragModulePreview moduleId={activeDrag.typeId} width={previewSize.width} height={previewSize.height} hires={hires} />
               {isGhostOutsideScene && activeDrag.source === 'grid' ? (
                 <span className="mb-overlay-remove-icon" aria-hidden="true">

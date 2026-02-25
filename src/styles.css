@@ -995,6 +995,10 @@ body {
   opacity: 0.82;
 }
 
+.mb-overlay-shell.is-touch-hold .mb-overlay {
+  opacity: 0.12;
+}
+
 .mb-hold-preview {
   position: fixed;
   z-index: 9998;
@@ -1287,7 +1291,7 @@ body {
 
 .mb-builder.is-mobile-layout .mb-catalog-row-2 .mb-card .mb-card-meta,
 .mb-builder.is-mobile-layout .mb-catalog-row-3 .mb-card .mb-card-meta {
-  margin-top: -13px;
+  margin-top: -11px;
 }
 
 .mb-preview-error {
