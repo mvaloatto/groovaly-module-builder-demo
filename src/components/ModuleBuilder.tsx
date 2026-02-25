@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -272,7 +272,17 @@ function buildReadableQuotePayload(layout: ReturnType<typeof exportLayout>): str
   ].join('\n');
 }
 
-function PaletteCard({ moduleItem, hires }: { moduleItem: ModuleVisual; hires: boolean }): JSX.Element {
+function PaletteCard({
+  moduleItem,
+  hires,
+  onHoldPreview,
+  onClearHoldPreview,
+}: {
+  moduleItem: ModuleVisual;
+  hires: boolean;
+  onHoldPreview: (preview: { moduleId: ModuleId; left: number; top: number; width: number; height: number; hires: boolean }) => void;
+  onClearHoldPreview: () => void;
+}): JSX.Element {
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: `palette-${moduleItem.id}`,
     data: {
@@ -283,12 +293,44 @@ function PaletteCard({ moduleItem, hires }: { moduleItem: ModuleVisual; hires: b
     },
   });
 
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHold = (): void => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    onClearHoldPreview();
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLButtonElement>): void => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    clearHold();
+    holdTimerRef.current = setTimeout(() => {
+      onHoldPreview({
+        moduleId: moduleItem.id,
+        left: touch.clientX - rect.width / 2,
+        top: touch.clientY - rect.height / 2,
+        width: rect.width,
+        height: rect.height,
+        hires,
+      });
+      holdTimerRef.current = null;
+    }, 120);
+  };
+
   return (
     <button
       ref={setNodeRef}
       type="button"
       className={`mb-card ${isDragging ? 'is-dragging' : ''}`}
       style={isDragging ? ({ opacity: 0.8 } as CSSProperties) : undefined}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={clearHold}
+      onTouchCancel={clearHold}
+      onTouchMove={clearHold}
       {...listeners}
       {...attributes}
     >
@@ -466,6 +508,15 @@ export function ModuleBuilder({
   const [actionsMounted, setActionsMounted] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
   const [activeDragRect, setActiveDragRect] = useState<{ width: number; height: number } | null>(null);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
+  const [holdPreview, setHoldPreview] = useState<{
+    moduleId: ModuleId;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    hires: boolean;
+  } | null>(null);
 
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const lastGhostRectRef = useRef<GhostRect | null>(null);
@@ -475,7 +526,7 @@ export function ModuleBuilder({
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 10 } }),
   );
 
   const hires = dpr >= 1.5;
@@ -489,6 +540,10 @@ export function ModuleBuilder({
     const updateDpr = () => {
       if (typeof window !== 'undefined') {
         setDpr(window.devicePixelRatio || 1);
+        const screenWidth = typeof window.screen?.width === 'number' ? window.screen.width : window.innerWidth;
+        const minWidth = Math.min(window.innerWidth || screenWidth, screenWidth);
+        const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+        setIsCompactLayout(minWidth <= 900 || (coarse && minWidth <= 1100));
       }
     };
 
@@ -547,6 +602,7 @@ export function ModuleBuilder({
   }, [placedItems.length]);
 
   const handleDragStart = (event: DragStartEvent): void => {
+    setHoldPreview(null);
     const data = event.active.data.current;
     if (!data) return;
     setIsGhostOutsideScene(false);
@@ -568,6 +624,7 @@ export function ModuleBuilder({
   };
 
   const handleDragMove = (event: DragMoveEvent): void => {
+    setHoldPreview(null);
     const translatedRect = toGhostRect(event.active.rect.current.translated);
     if (translatedRect) {
       lastGhostRectRef.current = translatedRect;
@@ -625,6 +682,7 @@ export function ModuleBuilder({
   };
 
   const handleDragEnd = (event: DragEndEvent): void => {
+    setHoldPreview(null);
     if (!activeDrag) {
       setIsGhostOutsideScene(false);
       setActiveDrag(null);
@@ -711,6 +769,7 @@ export function ModuleBuilder({
   };
 
   const handleDragCancel = (): void => {
+    setHoldPreview(null);
     setIsGhostOutsideScene(false);
     setActiveDrag(null);
     setActiveDragRect(null);
@@ -942,7 +1001,7 @@ export function ModuleBuilder({
   };
 
   return (
-    <section className="mb-builder" aria-label="Module setup builder">
+    <section className={`mb-builder ${isCompactLayout ? 'is-mobile-layout' : ''}`} aria-label="Module setup builder">
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
@@ -1088,17 +1147,35 @@ export function ModuleBuilder({
           </div>
           <div className="mb-catalog mb-catalog-row-1">
             {topRow.map((moduleItem) => (
-              <PaletteCard key={moduleItem.id} moduleItem={moduleItem} hires={hires} />
+              <PaletteCard
+                key={moduleItem.id}
+                moduleItem={moduleItem}
+                hires={hires}
+                onHoldPreview={(preview) => setHoldPreview(preview)}
+                onClearHoldPreview={() => setHoldPreview(null)}
+              />
             ))}
           </div>
           <div className="mb-catalog mb-catalog-row-2">
             {midRow.map((moduleItem) => (
-              <PaletteCard key={moduleItem.id} moduleItem={moduleItem} hires={hires} />
+              <PaletteCard
+                key={moduleItem.id}
+                moduleItem={moduleItem}
+                hires={hires}
+                onHoldPreview={(preview) => setHoldPreview(preview)}
+                onClearHoldPreview={() => setHoldPreview(null)}
+              />
             ))}
           </div>
           <div className="mb-catalog mb-catalog-row-3">
             {bottomRow.map((moduleItem) => (
-              <PaletteCard key={moduleItem.id} moduleItem={moduleItem} hires={hires} />
+              <PaletteCard
+                key={moduleItem.id}
+                moduleItem={moduleItem}
+                hires={hires}
+                onHoldPreview={(preview) => setHoldPreview(preview)}
+                onClearHoldPreview={() => setHoldPreview(null)}
+              />
             ))}
           </div>
         </aside>
@@ -1131,6 +1208,25 @@ export function ModuleBuilder({
           <span className="mb-overlay-remove-icon">
             <img src={withBase('/images/icons/icon_remove.png')} alt="" />
           </span>
+        </div>
+      ) : null}
+      {!activeDrag && holdPreview ? (
+        <div
+          className="mb-hold-preview"
+          style={{
+            left: holdPreview.left,
+            top: holdPreview.top,
+            width: holdPreview.width,
+            height: holdPreview.height,
+          }}
+          aria-hidden="true"
+        >
+          <DragModulePreview
+            moduleId={holdPreview.moduleId}
+            width={holdPreview.width}
+            height={holdPreview.height}
+            hires={holdPreview.hires}
+          />
         </div>
       ) : null}
       {!embedMode && isQuoteOpen && quotePayload ? (
