@@ -42,6 +42,7 @@ type QuotePayload = {
     subtotal: number;
   }>;
   layout: ReturnType<typeof exportLayout>;
+  quotePayloadText?: string;
   previewImageUrl?: string;
   previewImageWidth?: number;
   previewImageHeight?: number;
@@ -217,6 +218,52 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     image.onerror = () => reject(new Error(`Image failed to load: ${src}`));
     image.src = src;
   });
+}
+
+function buildReadableQuotePayload(layout: ReturnType<typeof exportLayout>): string {
+  const modules = [...layout.modules].sort(
+    (a, b) => a.y - b.y || a.x - b.x || a.type.localeCompare(b.type),
+  );
+
+  if (modules.length === 0) {
+    return ['---', 'Composition details (0 modules):', '- No modules', '---', 'Composition summary (0 modules):', '- No modules', '---'].join('\n');
+  }
+
+  const minX = modules.reduce((min, moduleItem) => Math.min(min, moduleItem.x), Number.POSITIVE_INFINITY);
+
+  const detailLines = modules.map((moduleItem) => {
+    const colStart = moduleItem.x - minX + 1;
+    const colEnd = colStart + moduleItem.w - 1;
+    const colLabel = colStart === colEnd ? `Col${colStart}` : `Col${colStart}-${colEnd}`;
+    const feet = moduleItem.feet ? 'Yes' : 'No';
+    return `1x ${moduleItem.type} - Quantity: 1 ; Position: Row${moduleItem.y + 1}/${colLabel} ; Color: White Pearl ; Feet: ${feet}`;
+  });
+
+  const grouped = new Map<string, { type: string; feet: 'Yes' | 'No'; quantity: number }>();
+  for (const moduleItem of modules) {
+    const feet = moduleItem.feet ? 'Yes' : 'No';
+    const key = `${moduleItem.type}|${feet}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.quantity += 1;
+      continue;
+    }
+    grouped.set(key, { type: moduleItem.type, feet, quantity: 1 });
+  }
+
+  const summaryLines = Array.from(grouped.values())
+    .sort((a, b) => b.quantity - a.quantity || a.type.localeCompare(b.type) || a.feet.localeCompare(b.feet))
+    .map((line) => `${line.quantity}x ${line.type} - Quantity:${line.quantity} ; Color: White Pearl ; Feet: ${line.feet}`);
+
+  return [
+    '---',
+    `Composition details (${modules.length} modules):`,
+    ...detailLines,
+    '---',
+    `Composition summary (${modules.length} modules):`,
+    ...summaryLines,
+    '---',
+  ].join('\n');
 }
 
 function PaletteCard({ moduleItem, hires }: { moduleItem: ModuleVisual; hires: boolean }): JSX.Element {
@@ -830,6 +877,8 @@ export function ModuleBuilder({
           setQuoteError('Preview upload failed. Quote payload is still available without image.');
         }
       }
+
+      payload.quotePayloadText = buildReadableQuotePayload(payload.layout);
 
       setQuotePayload(payload);
       if (!embedMode) {
