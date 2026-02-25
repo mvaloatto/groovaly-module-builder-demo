@@ -999,7 +999,7 @@ body {
   position: fixed;
   z-index: 9998;
   pointer-events: none;
-  opacity: 0.26;
+  opacity: 0.14;
   filter: saturate(0.92);
 }
 
@@ -1172,10 +1172,11 @@ body {
 
 .mb-builder.is-mobile-layout .mb-side-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 24px;
+  min-height: 42px;
 }
 
 .mb-builder.is-mobile-layout .mb-side-title {
@@ -1189,7 +1190,8 @@ body {
   min-width: 0;
   display: flex;
   justify-content: flex-end;
-  align-items: center;
+  align-items: flex-start;
+  min-height: 42px;
 }
 
 .mb-builder.is-mobile-layout .mb-side-subtitle {
@@ -1211,9 +1213,9 @@ body {
 
 .mb-builder.is-mobile-layout .mb-btn-preorder-mobile {
   display: inline-flex;
-  min-width: 145px;
+  min-width: 161px;
   justify-content: center;
-  padding-block: 10px;
+  padding-block: 6px;
   padding-inline: 14px;
 }
 
@@ -1280,6 +1282,11 @@ body {
 .mb-builder.is-mobile-layout .mb-card-label {
   font-size: clamp(12px, 3vw, 18px);
   line-height: 1;
+}
+
+.mb-builder.is-mobile-layout .mb-catalog-row-2 .mb-card .mb-card-meta,
+.mb-builder.is-mobile-layout .mb-catalog-row-3 .mb-card .mb-card-meta {
+  margin-top: 0;
 }
 
 .mb-preview-error {
