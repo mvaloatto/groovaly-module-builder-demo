@@ -999,7 +999,7 @@ body {
   position: fixed;
   z-index: 9998;
   pointer-events: none;
-  opacity: 0.42;
+  opacity: 0.26;
   filter: saturate(0.92);
 }
 
