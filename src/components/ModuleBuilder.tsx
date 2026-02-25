@@ -239,40 +239,29 @@ function buildReadableQuotePayload(layout: ReturnType<typeof exportLayout>): str
     return `1x ${moduleItem.type} - Quantity: 1 ; Position: Row${moduleItem.y + 1}/${colLabel} ; Color: White Pearl ; Feet: ${feet}`;
   });
 
-  const grouped = new Map<
-    string,
-    { type: string; quantity: number; feetTrueCount: number; feetFalseCount: number }
-  >();
+  const grouped = new Map<string, { type: string; feet: 'Yes' | 'No'; quantity: number }>();
   for (const moduleItem of modules) {
-    const key = moduleItem.type;
+    const feet = moduleItem.feet ? 'Yes' : 'No';
+    const key = `${moduleItem.type}|${feet}`;
     const existing = grouped.get(key);
     if (existing) {
       existing.quantity += 1;
-      if (moduleItem.feet) existing.feetTrueCount += 1;
-      else existing.feetFalseCount += 1;
       continue;
     }
-    grouped.set(key, {
-      type: moduleItem.type,
-      quantity: 1,
-      feetTrueCount: moduleItem.feet ? 1 : 0,
-      feetFalseCount: moduleItem.feet ? 0 : 1,
-    });
+    grouped.set(key, { type: moduleItem.type, feet, quantity: 1 });
   }
 
   const summaryLines = Array.from(grouped.values())
-    .sort((a, b) => b.quantity - a.quantity || a.type.localeCompare(b.type))
-    .map((line) => {
-      const feet =
-        line.feetTrueCount > 0 && line.feetFalseCount > 0
-          ? 'Mixed'
-          : line.feetTrueCount > 0
-            ? 'Yes'
-            : 'No';
-      return `${line.quantity}x ${line.type} - Quantity:${line.quantity} ; Color: White Pearl ; Feet: ${feet}`;
-    });
+    .sort(
+      (a, b) =>
+        b.quantity - a.quantity ||
+        a.type.localeCompare(b.type) ||
+        (a.feet === b.feet ? 0 : a.feet === 'Yes' ? -1 : 1),
+    )
+    .map((line) => `${line.quantity}x ${line.type} - Quantity:${line.quantity} ; Color: White Pearl ; Feet: ${line.feet}`);
 
   return [
+    '',
     '---',
     `Composition details (${modules.length} modules):`,
     ...detailLines,
