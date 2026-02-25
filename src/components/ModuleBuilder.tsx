@@ -1084,7 +1084,7 @@ export function ModuleBuilder({
             {hasPlacedItems ? (
               <button type="button" className="mb-reset-link mb-reset-link-overlay" onClick={resetBuilder}>
                 <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
-                Reset grid
+                Clear grid
               </button>
             ) : null}
 
@@ -1105,7 +1105,7 @@ export function ModuleBuilder({
                     onClick={resetBuilder}
                   >
                     <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
-                    Reset grid
+                    Clear grid
                   </button>
                 </div>
               </div>
@@ -1138,11 +1138,11 @@ export function ModuleBuilder({
 
         <aside className={`mb-side ${hasPlacedItems ? 'has-modules' : ''}`} aria-label="Modules panel">
           <div className="mb-side-head">
-            <h2 className="mb-side-title">Modules</h2>
+            <h2 className="mb-side-title">Elements</h2>
             <div className="mb-side-head-right">
               <div className="mb-side-subtitle">
                 <img src={withBase('/images/icons/icon_drag.png')} alt="" aria-hidden="true" />
-                <span>Drag any module onto the grid</span>
+                <span>Drag elements onto the grid</span>
               </div>
               {hasPlacedItems ? (
                 <button
