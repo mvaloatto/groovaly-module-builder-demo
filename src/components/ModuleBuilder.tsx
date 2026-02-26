@@ -367,18 +367,12 @@ function PlacedModule({
   geometry,
   scale,
   hires,
-  addFeet,
-  compactLabel,
-  onToggleFeet,
   onRemove,
 }: {
   item: PlacedItem;
   geometry: BackgroundGeometry;
   scale: number;
   hires: boolean;
-  addFeet: boolean;
-  compactLabel?: boolean;
-  onToggleFeet: () => void;
   onRemove: (id: string) => void;
 }): JSX.Element {
   const moduleItem = moduleById(item.typeId as ModuleId);
@@ -414,24 +408,6 @@ function PlacedModule({
       {...attributes}
     >
       <img src={gridModuleSrc(moduleItem.id, hires)} alt={moduleItem.name} className="mb-placed-image" draggable={false} />
-
-      {item.row === 0 ? (
-        <button
-          type="button"
-          className="mb-feet-toggle"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleFeet();
-          }}
-          aria-label="Toggle add feet"
-        >
-          <span className="mb-feet-check" aria-hidden="true">
-            <span className={addFeet ? 'is-on' : ''} />
-          </span>
-          <span className="mb-feet-label">{compactLabel ? 'feet' : 'add feet'}</span>
-        </button>
-      ) : null}
 
       <button
         type="button"
@@ -1074,18 +1050,28 @@ export function ModuleBuilder({
                 geometry={background}
                 scale={scale}
                 hires={hires}
-                addFeet={addFeet}
-                compactLabel={isCompactLayout}
-                onToggleFeet={() => setAddFeet((current) => !current)}
                 onRemove={(id) => setPlacedItems((current) => current.filter((entry) => entry.id !== id))}
               />
             ))}
 
             {hasPlacedItems ? (
-              <button type="button" className="mb-reset-link mb-reset-link-overlay" onClick={resetBuilder}>
-                <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
-                Clear grid
-              </button>
+              <>
+                <button type="button" className="mb-reset-link mb-reset-link-overlay" onClick={resetBuilder}>
+                  <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
+                  Clear grid
+                </button>
+                <button
+                  type="button"
+                  className="mb-feet-toggle mb-feet-global-overlay"
+                  onClick={() => setAddFeet((current) => !current)}
+                  aria-label="Toggle add feet for bottom modules"
+                >
+                  <span className="mb-feet-check" aria-hidden="true">
+                    <span className={addFeet ? 'is-on' : ''} />
+                  </span>
+                  <span className="mb-feet-label">add feet</span>
+                </button>
+              </>
             ) : null}
 
             {actionsMounted ? (
