@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 var defaultRepoName = 'groovaly-module-builder';
 var githubRepository = process.env.GITHUB_REPOSITORY || '';
-var repoName = githubRepository.includes('/')
+var repoName = githubRepository.indexOf('/') >= 0
     ? githubRepository.split('/')[1]
     : defaultRepoName;
 export default defineConfig({

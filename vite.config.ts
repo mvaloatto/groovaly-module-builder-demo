@@ -7,7 +7,7 @@ declare const process: {
 
 const defaultRepoName = 'groovaly-module-builder';
 const githubRepository = process.env.GITHUB_REPOSITORY || '';
-const repoName = githubRepository.includes('/')
+const repoName = githubRepository.indexOf('/') >= 0
   ? githubRepository.split('/')[1]
   : defaultRepoName;
 
