@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-var repoName = 'groovaly-module-builder';
+var defaultRepoName = 'groovaly-module-builder';
+var githubRepository = process.env.GITHUB_REPOSITORY || '';
+var repoName = githubRepository.includes('/')
+    ? githubRepository.split('/')[1]
+    : defaultRepoName;
 export default defineConfig({
     plugins: [react()],
     base: process.env.GITHUB_ACTIONS ? "/".concat(repoName, "/") : '/',

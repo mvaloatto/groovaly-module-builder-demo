@@ -5,7 +5,11 @@ declare const process: {
   env: Record<string, string | undefined>;
 };
 
-const repoName = 'groovaly-module-builder';
+const defaultRepoName = 'groovaly-module-builder';
+const githubRepository = process.env.GITHUB_REPOSITORY || '';
+const repoName = githubRepository.includes('/')
+  ? githubRepository.split('/')[1]
+  : defaultRepoName;
 
 export default defineConfig({
   plugins: [react()],
