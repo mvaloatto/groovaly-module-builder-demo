@@ -1168,18 +1168,14 @@ export function ModuleBuilder({
                       onClick={() => setUnitSystem((current) => (current === 'cm' ? 'in' : 'cm'))}
                       aria-label="Toggle composition dimensions unit"
                     >
-                      <span className="mb-dimensions-values">
-                        {dimensions.height} × {dimensions.width} × {dimensions.depth} (H × W × D)
-                      </span>{' '}
-                      {unitSystem === 'cm' ? (
-                        <span className="mb-dimensions-units">
-                          <strong>cm</strong> / in
-                        </span>
-                      ) : (
-                        <span className="mb-dimensions-units">
-                          <strong>in</strong> / cm
-                        </span>
-                      )}
+                      <span className="mb-dimensions-main">
+                        {dimensions.height} × {dimensions.width} × {dimensions.depth}{' '}
+                        <span className="mb-dimensions-main-unit">{unitSystem}</span> (H × W × D)
+                      </span>
+                      <span className="mb-dimensions-separator" aria-hidden="true">
+                        |
+                      </span>
+                      <span className="mb-dimensions-alt-unit">{unitSystem === 'cm' ? 'in' : 'cm'}</span>
                     </button>
                   ) : null}
                   <button

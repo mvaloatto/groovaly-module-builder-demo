@@ -831,12 +831,24 @@ body {
   margin: 0;
   display: inline-flex;
   align-items: baseline;
-  gap: 2px;
+  gap: 8px;
   cursor: pointer;
+  position: relative;
+  top: 4px;
 }
 
-.mb-dimensions-toggle strong {
-  font-weight: 700;
+.mb-dimensions-main-unit {
+  font-weight: 400;
+}
+
+.mb-dimensions-separator {
+  font-weight: 200;
+  line-height: 1;
+}
+
+.mb-dimensions-alt-unit {
+  font-weight: 900;
+  line-height: 1;
 }
 
 .mb-feet-global-overlay {
@@ -1318,6 +1330,7 @@ body {
 
 .mb-builder.is-mobile-layout .mb-dimensions-toggle {
   font-size: 12px;
+  top: 7px;
 }
 
 .mb-builder.is-mobile-layout .mb-feet-global-overlay .mb-feet-check {
