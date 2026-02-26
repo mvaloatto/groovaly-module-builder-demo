@@ -48,6 +48,16 @@ type QuotePayload = {
   previewImageHeight?: number;
 };
 
+type UnitSystem = 'cm' | 'in';
+
+type CompositionMetrics = {
+  widthCm: number;
+  heightCm: number;
+  depthCm: number;
+  weightKg: number;
+  modulesCount: number;
+};
+
 type ActiveDrag = {
   source: 'palette' | 'grid';
   typeId: ModuleId;
@@ -143,6 +153,33 @@ const MODULE_PRICES: Record<ModuleId, number> = {
   nest: 115,
 };
 
+const MODULE_WEIGHT_KG: Record<ModuleId, number> = {
+  nest: 3.6,
+  bloom: 25.2,
+  tilt: 33.7,
+  chest: 37.3,
+  grid: 25.8,
+  split: 20.9,
+  cub: 19.4,
+};
+
+const MODULE_WIDTH_CM: Record<ModuleId, number> = {
+  tilt: 84,
+  chest: 84,
+  bloom: 42,
+  grid: 42,
+  split: 42,
+  cub: 42,
+  nest: 42,
+};
+
+const STANDARD_MODULE_HEIGHT_CM = 47;
+const NEST_HEIGHT_CM = 3;
+const COMPOSITION_DEPTH_CM = 42;
+const FEET_HEIGHT_CM = 8;
+const FEET_PER_MODULE = 4;
+const FOOT_WEIGHT_KG = 0.08;
+
 const CLOUDINARY_CLOUD_NAME = 'dnzdunl2d';
 const CLOUDINARY_UNSIGNED_PRESET = 'groovaly_quotes_unsigned';
 const SCREENSHOT_MAX_WIDTH = 900;
@@ -220,7 +257,45 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-function buildReadableQuotePayload(layout: ReturnType<typeof exportLayout>): string {
+function computeCompositionMetrics(placedItems: PlacedItem[], addFeet: boolean): CompositionMetrics | null {
+  if (placedItems.length === 0) return null;
+
+  let minCol = Number.POSITIVE_INFINITY;
+  let maxCol = Number.NEGATIVE_INFINITY;
+  let maxRow = 0;
+  let modulesWeightKg = 0;
+
+  for (const item of placedItems) {
+    minCol = Math.min(minCol, item.col);
+    maxCol = Math.max(maxCol, item.col + item.w - 1);
+    maxRow = Math.max(maxRow, item.row);
+    modulesWeightKg += MODULE_WEIGHT_KG[item.typeId as ModuleId] ?? 0;
+  }
+
+  const topRowModules = placedItems.filter((item) => item.row === maxRow);
+  const topRowHeightCm =
+    topRowModules.length === 1 && topRowModules[0].typeId === 'nest'
+      ? NEST_HEIGHT_CM
+      : STANDARD_MODULE_HEIGHT_CM;
+
+  const widthCm = maxCol >= minCol ? maxCol - minCol + 1 : 0;
+  const bottomRowCount = addFeet ? placedItems.filter((item) => item.row === 0).length : 0;
+  const feetWeightKg = bottomRowCount * FEET_PER_MODULE * FOOT_WEIGHT_KG;
+
+  return {
+    widthCm: widthCm * MODULE_WIDTH_CM.bloom,
+    heightCm: maxRow * STANDARD_MODULE_HEIGHT_CM + topRowHeightCm + (addFeet ? FEET_HEIGHT_CM : 0),
+    depthCm: COMPOSITION_DEPTH_CM,
+    weightKg: modulesWeightKg + feetWeightKg,
+    modulesCount: placedItems.length,
+  };
+}
+
+function cmToInches(valueCm: number): number {
+  return Math.round((valueCm / 2.54) * 10) / 10;
+}
+
+function buildReadableQuotePayload(layout: ReturnType<typeof exportLayout>, metrics: CompositionMetrics | null): string {
   const modules = [...layout.modules].sort(
     (a, b) => a.y - b.y || a.x - b.x || a.type.localeCompare(b.type),
   );
@@ -260,6 +335,15 @@ function buildReadableQuotePayload(layout: ReturnType<typeof exportLayout>): str
     )
     .map((line) => `${line.quantity}x ${line.type} - Quantity:${line.quantity} ; Color: White Pearl ; Feet: ${line.feet}`);
 
+  const sizeAndWeightLines = metrics
+    ? [
+        '---',
+        `Composition size & weight (${metrics.modulesCount} modules):`,
+        `${metrics.heightCm} × ${metrics.widthCm} × ${metrics.depthCm} (H × W × D) cm`,
+        `${metrics.weightKg.toFixed(1)} kg`,
+      ]
+    : [];
+
   return [
     '-',
     '---',
@@ -268,7 +352,7 @@ function buildReadableQuotePayload(layout: ReturnType<typeof exportLayout>): str
     '---',
     `Composition summary (${modules.length} modules):`,
     ...summaryLines,
-    '---',
+    ...sizeAndWeightLines,
   ].join('\n');
 }
 
@@ -478,6 +562,7 @@ export function ModuleBuilder({
   const [sceneWidth, setSceneWidth] = useState(0);
   const [dpr, setDpr] = useState(1);
   const [addFeet, setAddFeet] = useState(false);
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>('cm');
   const [quotePayload, setQuotePayload] = useState<QuotePayload | null>(null);
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [isQuoteSubmitting, setIsQuoteSubmitting] = useState(false);
@@ -789,6 +874,11 @@ export function ModuleBuilder({
     return placedItems.filter((item) => item.row === 0);
   }, [addFeet, placedItems]);
 
+  const compositionMetrics = useMemo(
+    () => computeCompositionMetrics(placedItems, addFeet),
+    [placedItems, addFeet],
+  );
+
   const buildQuotePayload = (): QuotePayload => {
     const counts = new Map<ModuleId, number>();
     for (const item of placedItems) {
@@ -948,7 +1038,7 @@ export function ModuleBuilder({
         }
       }
 
-      payload.quotePayloadText = buildReadableQuotePayload(payload.layout);
+      payload.quotePayloadText = buildReadableQuotePayload(payload.layout, compositionMetrics);
 
       setQuotePayload(payload);
       if (!embedMode) {
@@ -979,9 +1069,19 @@ export function ModuleBuilder({
   );
   const bottomRow = MODULES.filter((moduleItem) => moduleItem.id === 'cub' || moduleItem.id === 'nest');
   const hasPlacedItems = placedItems.length > 0;
+  const formatDimensionValue = (value: number): string =>
+    unitSystem === 'cm' ? String(Math.round(value)) : value.toFixed(1);
+  const dimensions = compositionMetrics
+    ? {
+        width: formatDimensionValue(unitSystem === 'cm' ? compositionMetrics.widthCm : cmToInches(compositionMetrics.widthCm)),
+        height: formatDimensionValue(unitSystem === 'cm' ? compositionMetrics.heightCm : cmToInches(compositionMetrics.heightCm)),
+        depth: formatDimensionValue(unitSystem === 'cm' ? compositionMetrics.depthCm : cmToInches(compositionMetrics.depthCm)),
+      }
+    : null;
   const resetBuilder = (): void => {
     setPlacedItems([]);
     setAddFeet(false);
+    setUnitSystem('cm');
     setQuotePayload(null);
     setIsQuoteOpen(false);
   };
@@ -1060,17 +1160,40 @@ export function ModuleBuilder({
                   <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
                   <span className="mb-reset-link-text">Clear grid</span>
                 </button>
-                <button
-                  type="button"
-                  className="mb-feet-toggle mb-feet-global-overlay"
-                  onClick={() => setAddFeet((current) => !current)}
-                  aria-label="Toggle add feet for bottom modules"
-                >
-                  <span className="mb-feet-check" aria-hidden="true">
-                    <span className={addFeet ? 'is-on' : ''} />
-                  </span>
-                  <span className="mb-feet-label">add feet</span>
-                </button>
+                <div className="mb-right-overlay-controls">
+                  {dimensions ? (
+                    <button
+                      type="button"
+                      className="mb-dimensions-toggle"
+                      onClick={() => setUnitSystem((current) => (current === 'cm' ? 'in' : 'cm'))}
+                      aria-label="Toggle composition dimensions unit"
+                    >
+                      <span className="mb-dimensions-values">
+                        {dimensions.height} × {dimensions.width} × {dimensions.depth} (H × W × D)
+                      </span>{' '}
+                      {unitSystem === 'cm' ? (
+                        <span className="mb-dimensions-units">
+                          <strong>cm</strong> / in
+                        </span>
+                      ) : (
+                        <span className="mb-dimensions-units">
+                          <strong>in</strong> / cm
+                        </span>
+                      )}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="mb-feet-toggle mb-feet-global-overlay"
+                    onClick={() => setAddFeet((current) => !current)}
+                    aria-label="Toggle add feet for bottom modules"
+                  >
+                    <span className="mb-feet-check" aria-hidden="true">
+                      <span className={addFeet ? 'is-on' : ''} />
+                    </span>
+                    <span className="mb-feet-label">add feet</span>
+                  </button>
+                </div>
               </>
             ) : null}
 
