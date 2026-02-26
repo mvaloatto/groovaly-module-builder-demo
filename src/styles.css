@@ -831,7 +831,7 @@ body {
   margin: 0;
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 4px;
   cursor: pointer;
   position: relative;
   top: 4px;
@@ -844,10 +844,13 @@ body {
 .mb-dimensions-separator {
   font-weight: 200;
   line-height: 1;
+  margin: 0 1px;
 }
 
 .mb-dimensions-alt-unit {
   font-weight: 900;
+  color: #000;
+  letter-spacing: 0;
   line-height: 1;
 }
 
@@ -1330,7 +1333,7 @@ body {
 
 .mb-builder.is-mobile-layout .mb-dimensions-toggle {
   font-size: 12px;
-  top: 7px;
+  top: 4px;
 }
 
 .mb-builder.is-mobile-layout .mb-feet-global-overlay .mb-feet-check {
