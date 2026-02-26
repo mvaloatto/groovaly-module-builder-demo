@@ -1058,7 +1058,7 @@ export function ModuleBuilder({
               <>
                 <button type="button" className="mb-reset-link mb-reset-link-overlay" onClick={resetBuilder}>
                   <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
-                  Clear grid
+                  <span className="mb-reset-link-text">Clear grid</span>
                 </button>
                 <button
                   type="button"
@@ -1091,7 +1091,7 @@ export function ModuleBuilder({
                     onClick={resetBuilder}
                   >
                     <img src={withBase('/images/icons/icon_reset.png')} alt="" aria-hidden="true" />
-                    Clear grid
+                    <span className="mb-reset-link-text">Clear grid</span>
                   </button>
                 </div>
               </div>

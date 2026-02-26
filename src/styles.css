@@ -835,6 +835,9 @@ body {
 
 .mb-feet-global-overlay .mb-feet-label {
   font-size: 16px;
+  font-weight: 300;
+  position: relative;
+  top: 1px;
 }
 
 .mb-side-head {
@@ -1266,8 +1269,13 @@ body {
 }
 
 .mb-builder.is-mobile-layout .mb-reset-link-overlay img {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
+}
+
+.mb-builder.is-mobile-layout .mb-reset-link-overlay .mb-reset-link-text {
+  position: relative;
+  top: 1px;
 }
 
 .mb-builder.is-mobile-layout .mb-feet-global-overlay {
@@ -1292,6 +1300,9 @@ body {
 
 .mb-builder.is-mobile-layout .mb-feet-global-overlay .mb-feet-label {
   font-size: 12px;
+  font-weight: 400;
+  position: relative;
+  top: 1px;
 }
 
 .mb-builder.is-mobile-layout .mb-catalog {
